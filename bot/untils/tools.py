@@ -7,7 +7,7 @@ import logging
 __log = logging.getLogger(__name__)
 
 async def notify_admins(bot: Bot, msg: str, sender_id: int | None):
-    admins_id = vars.admins
+    admins_id = vars.admins.copy()
 
     if sender_id: admins_id.remove(sender_id)
 
