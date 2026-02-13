@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.filters import Command
 
 from bot.filters.admin_filter import IsAdmin
@@ -7,7 +7,7 @@ from bot.filters.admin_filter import IsAdmin
 from bot.keyboards.dynamic_kb import get_inline_kb
 from bot.keyboards.menu_kb_r import menu_kb
 
-from bot.handlers._tools import send_log
+import bot.untils.tools as tools
 
 from main import get_server_manager
 
@@ -21,14 +21,18 @@ mg = get_server_manager()
 
 @router.message(IsAdmin(), F.text == "Запустить")
 async def start_server_cmd(msg: Message):
+    msg_text = ""
     if mg.check_status():
-        await msg.answer("Сервер уже запущен")
+        msg_text = "Сервер уже запущен"
     else:
         mg.start_server()
-        await msg.answer("Сервер запускатеся")
+        msg_text = "Сервер запускатеся"
+    await msg.answer(msg_text)
+    await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 @router.message(IsAdmin(), F.text == "Остановить")
 async def stop_server_cmd(msg: Message):
+    msg_text = ""
     if mg.check_status():
         if mg.get_players_list():
             await msg.answer("Вы действительно хотите остановить сервер?\nНа сервере сейчас присутствуют игроки",
@@ -37,9 +41,12 @@ async def stop_server_cmd(msg: Message):
         else:
             uptime = mg.get_uptime()
             mg.stop_server()
-            await msg.answer(f"Сервер остановлен, его аптайм был {uptime}")
+            msg_text = f"Сервер остановлен, его аптайм был {uptime}"
     else:
-        await msg.answer("Сервер уже был остановлен")
+        msg_text = "Сервер уже был остановлен"
+    if msg_text:
+        await msg.answer(msg_text)
+        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 @router.message(IsAdmin(), F.text == "Статус")
 async def check_server_cmd(msg: Message):
@@ -49,7 +56,7 @@ async def check_server_cmd(msg: Message):
 
 @router.message(IsAdmin(), F.text == "Логи")
 async def get_logs_shortly_cmd(msg: Message):
-    await send_log(msg, mg.get_logs())
+    await _send_log(msg, mg.get_logs())
 
 @router.message(IsAdmin(), F.text == "Назад в меню")
 async def send_menu_kb_cmd(msg: Message):
@@ -62,7 +69,7 @@ async def get_logs_custom_cmd(msg: Message):
     except:
         tails = 50
     logs = mg.get_logs(tails)
-    await send_log(msg, logs)
+    await _send_log(msg, logs)
 
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
 async def comfirm_close_server_cb(cb: CallbackQuery):
@@ -73,3 +80,12 @@ async def comfirm_close_server_cb(cb: CallbackQuery):
         uptime = mg.get_uptime()
         mg.stop_server()
         await cb.message.answer(f"Сервер остановлен, его аптайм был {uptime}", reply_markup=menu_kb)
+
+async def _send_log(msg: Message, logs: str):
+    if len(logs) > 1500:
+        file = BufferedInputFile(logs.encode(), "logs.txt")
+        await msg.answer_document(file, caption="Последние логи сервера\n\nНужны более длинные логи? отправльте команду /logs <tails-count>")
+    elif logs:
+        await msg.answer(f"Логи сервера:\n{logs}")
+    else:
+        await msg.answer("Логи пустые")

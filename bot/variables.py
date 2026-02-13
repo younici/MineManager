@@ -1,1 +1,1 @@
-admins: list[int] = None
+admins: list[int] = []

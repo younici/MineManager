@@ -36,10 +36,10 @@ async def clear_logs_cmd(msg: Message):
     mg.clear_logs()
     await msg.answer("Логи были очищены")
 
-@router.message(IsAdmin(), F.text == "Другие действия...")
-async def send_extended_kb_cmd(msg: Message):
-    await msg.answer("Расширеное меню", reply_markup=extended_kb)
-
 @router.message(IsAdmin(), F.text == "Аптайм")
 async def send_uptime_server_cmd(msg: Message):
     await msg.answer(mg.get_uptime())
+
+@router.message(IsAdmin(), F.text == "Другие действия...")
+async def send_extended_kb_cmd(msg: Message):
+    await msg.answer("Расширеное меню", reply_markup=extended_kb)
