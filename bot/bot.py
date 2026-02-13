@@ -10,6 +10,8 @@ import bot.handlers as handlers
 import pkgutil
 import importlib
 
+import logging
+
 async def start(token: str, tg_admins: list[int], redis: Redis | None):
     storage = RedisStorage(redis) if redis else None
     dp = Dispatcher(storage=storage)
@@ -23,5 +25,9 @@ async def start(token: str, tg_admins: list[int], redis: Redis | None):
             dp.include_router(module.router)
 
     variables.admins = tg_admins
+
+    log = logging.getLogger(__name__)
+
+    log.info(tg_admins)
 
     await dp.start_polling(bot)

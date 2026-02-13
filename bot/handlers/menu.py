@@ -28,31 +28,33 @@ async def start_server_cmd(msg: Message):
         mg.start_server()
         msg_text = "Сервер запускатеся"
     await msg.answer(msg_text)
+    msg_text += f"\nЗапускает: {msg.from_user.full_name}"
     await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
-@router.message(IsAdmin(), F.text == "Остановить")
+@router.message(IsAdmin(), F.text == "Выключить")
 async def stop_server_cmd(msg: Message):
     msg_text = ""
     if mg.check_status():
         if mg.get_players_list():
-            await msg.answer("Вы действительно хотите остановить сервер?\nНа сервере сейчас присутствуют игроки",
+            await msg.answer("Вы действительно хотите выключить сервер?\nНа сервере сейчас присутствуют игроки",
                               reply_markup=get_inline_kb({"Подтвердить": "close_1"}))
             return
         else:
             uptime = mg.get_uptime()
             mg.stop_server()
-            msg_text = f"Сервер остановлен, его аптайм был {uptime}"
+            msg_text = f"Сервер выключен, его аптайм был {uptime}"
     else:
-        msg_text = "Сервер уже был остановлен"
+        msg_text = "Сервер уже был выключен"
     if msg_text:
         await msg.answer(msg_text)
+        msg_text += f"\nВыключает: {msg.from_user.full_name}"
         await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 @router.message(IsAdmin(), F.text == "Статус")
 async def check_server_cmd(msg: Message):
     status = mg.check_status()
     uptime = mg.get_uptime()
-    await msg.answer(f"Сервер {"запущен" if status else "остановлен"}\nАптайм: {uptime}")
+    await msg.answer(f"Сервер {"запущен" if status else "выключен"}\nАптайм: {uptime}")
 
 @router.message(IsAdmin(), F.text == "Логи")
 async def get_logs_shortly_cmd(msg: Message):
@@ -79,7 +81,13 @@ async def comfirm_close_server_cb(cb: CallbackQuery):
     if action == "1":
         uptime = mg.get_uptime()
         mg.stop_server()
-        await cb.message.answer(f"Сервер остановлен, его аптайм был {uptime}", reply_markup=menu_kb)
+
+        await cb.message.answer(f"Сервер выключается, его аптайм был {uptime}", reply_markup=menu_kb)
+
+        msg = cb.message
+        msg_text += f"Сервер выключают\nОстанавливает: {msg.from_user.full_name}"
+
+        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 async def _send_log(msg: Message, logs: str):
     if len(logs) > 1500:
