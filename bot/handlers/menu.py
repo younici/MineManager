@@ -43,12 +43,13 @@ async def stop_server_cmd(msg: Message):
             uptime = mg.get_uptime()
             mg.stop_server()
             msg_text = f"Сервер выключен, его аптайм был {uptime}"
+        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
     else:
         msg_text = "Сервер уже был выключен"
     if msg_text:
         await msg.answer(msg_text)
         msg_text += f"\nВыключает: {msg.from_user.full_name}"
-        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
+        
 
 @router.message(IsAdmin(), F.text == "Статус")
 async def check_server_cmd(msg: Message):
