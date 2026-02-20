@@ -43,12 +43,12 @@ async def stop_server_cmd(msg: Message):
             uptime = mg.get_uptime()
             mg.stop_server()
             msg_text = f"Сервер выключен, его аптайм был {uptime}"
-        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
     else:
         msg_text = "Сервер уже был выключен"
     if msg_text:
-        await msg.answer(msg_text)
         msg_text += f"\nВыключает: {msg.from_user.full_name}"
+        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
+        await msg.answer(msg_text)
         
 
 @router.message(IsAdmin(), F.text == "Статус")
@@ -86,7 +86,7 @@ async def comfirm_close_server_cb(cb: CallbackQuery):
         await cb.message.answer(f"Сервер выключается, его аптайм был {uptime}", reply_markup=menu_kb)
 
         msg = cb.message
-        msg_text += f"Сервер выключают\nОстанавливает: {msg.from_user.full_name}"
+        msg_text += f"Сервер выключают\nВыключает: {msg.from_user.full_name}"
 
         await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
