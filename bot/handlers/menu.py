@@ -49,8 +49,6 @@ async def stop_server_cmd(msg: Message):
     msg_text += f"\nВыключает: {msg.from_user.full_name}"
     await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
         
-        
-
 @router.message(IsAdmin(), F.text == "Статус")
 async def check_server_cmd(msg: Message):
     status = mg.check_status()
@@ -98,3 +96,11 @@ async def _send_log(msg: Message, logs: str):
         await msg.answer(f"Логи сервера:\n{logs}")
     else:
         await msg.answer("Логи пустые")
+
+@router.message(Command("exec"), IsAdmin())
+async def exec_cmd(msg: Message):
+    try:
+        cmd = msg.text.split(sep=" ", maxsplit=2)[1]
+    except:
+        await msg.answer("Не вернно введены параметры")
+    await msg.answer(mg.exec_server(cmd))

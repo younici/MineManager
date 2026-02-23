@@ -73,6 +73,8 @@ class ServerManager():
         )
         log.info(f'Manager client connected')
 
+    def exec_server(self, command: str) -> str:
+        return self._run(f"docker exec {self._container_name} {command}")
 
     def _run(self, command: str) -> str:
         if self._client.get_transport() is None or not self._client.get_transport().is_active():
