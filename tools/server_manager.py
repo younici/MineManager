@@ -1,4 +1,5 @@
 import paramiko as pr
+import re
 
 import logging
 
@@ -74,7 +75,7 @@ class ServerManager():
         log.info(f'Manager client connected')
 
     def exec_server(self, command: str) -> str:
-        return self._run(f"docker exec {self._container_name} rcon-cli {command}")
+        return self.clean_ansi(self._run(f"docker exec {self._container_name} rcon-cli {command}"))
 
     def _run(self, command: str) -> str:
         if self._client.get_transport() is None or not self._client.get_transport().is_active():
@@ -97,3 +98,14 @@ class ServerManager():
     def close(self):
         self._client.close()
         log.info('Manager connect closed')
+
+    def clean_ansi(self, text: str) -> str:
+        # Удаляем ANSI escape sequences (цвета консоли)
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        text = ansi_escape.sub('', text)
+        
+        # Удаляем цветовые коды Minecraft (§ и последующий символ)
+        minecraft_escape = re.compile(r'§[0-9a-fk-orx]')
+        text = minecraft_escape.sub('', text)
+        
+        return text.strip()
