@@ -103,4 +103,5 @@ async def exec_cmd(msg: Message):
         cmd = msg.text.split(sep=" ", maxsplit=2)[1]
     except:
         await msg.answer("Не вернно введены параметры")
-    await msg.answer(mg.exec_server(cmd))
+        return
+    await msg.answer(F"{mg.exec_server(cmd)}")
