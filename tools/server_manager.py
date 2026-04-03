@@ -47,7 +47,7 @@ class ServerManager():
         return self._run(f"truncate -s 0 $(docker inspect --format='{{{{.LogPath}}}}' {self._container_name})")
     
     def get_players_list(self) -> list[str] | None:
-        data = self.exec_server("rcon-cli list")
+        data = self.exec_server("list")
         if "Failed" in data:
             return None
         
