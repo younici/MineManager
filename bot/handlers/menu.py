@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.filters import Command
@@ -99,9 +101,30 @@ async def _send_log(msg: Message, logs: str):
 
 @router.message(Command("exec"), IsAdmin())
 async def exec_cmd(msg: Message):
+    # 1. Правильно получаем команду (отделяем /exec от остального текста)
     try:
-        cmd = msg.text.split(sep=" ", maxsplit=2)[1]
-    except:
-        await msg.answer("Не вернно введены параметры")
+        # maxsplit=1 разделит строку на две части: команду бота и саму команду майнкрафта
+        cmd = msg.text.split(maxsplit=1)[1]
+    except IndexError:
+        await msg.answer("❌ Неверно введены параметры. Пример использования:\n`/exec list`", parse_mode="Markdown")
         return
-    await msg.answer(F"{mg.exec_server(cmd)}")
+
+    # Отправляем сообщение-заглушку, чтобы пользователь знал, что процесс пошел
+    status_msg = await msg.answer("⏳ Выполняю команду...")
+
+    try:
+        # 2. ПРАВИЛЬНЫЙ вызов в отдельном потоке (функция и аргумент отдельно!)
+        ret = await asyncio.to_thread(mg.exec_server, cmd)
+        
+        # 3. Защита от пустого ответа (чтобы Telegram не выдал ошибку)
+        if not ret or not str(ret).strip():
+            ret = "✅ Команда успешно отправлена, но сервер ничего не ответил."
+
+        # Редактируем статусное сообщение на результат
+        await status_msg.edit_text(f"```text\n{ret}\n```", parse_mode="Markdown")
+
+    except TimeoutError:
+        # Если вы добавили таймаут в Paramiko, как я советовал ранее
+        await status_msg.edit_text("❌ Ошибка: сервер Minecraft не ответил на команду (TimeOut).")
+    except Exception as e:
+        await status_msg.edit_text(f"❌ Произошла ошибка при выполнении:\n`{e}`", parse_mode="Markdown")

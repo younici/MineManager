@@ -29,5 +29,5 @@ async def start(token: str, tg_admins: list[int], redis: Redis | None):
     log = logging.getLogger(__name__)
 
     log.info(tg_admins)
-
+    
     await dp.start_polling(bot)

@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F
 from aiogram.types import Message
 
@@ -21,7 +23,7 @@ async def send_player_list_cmd(msg: Message):
         await msg.answer("Сервер не запущен")
         return
 
-    players_list = mg.get_players_list()
+    players_list = await asyncio.to_thread(mg.get_players_list)
     log.info(players_list)
     if players_list:
         players: str = ""

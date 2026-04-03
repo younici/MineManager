@@ -2,7 +2,7 @@ import os, asyncio
 from dotenv import load_dotenv
 
 from tools.server_manager import ServerManager
-import bot.bot as bot
+import bot.bot as bot   
 
 import logging
 logging.basicConfig(
@@ -28,11 +28,13 @@ password = os.getenv("password")
 username = os.getenv("serverusername")
 container_name = os.getenv("container_name")
 
+rcon_pass = os.getenv("rcon_pass")
+
 resid_url = os.getenv("redis_url")
 
 mg: ServerManager | None = None
 
-params = host, port, password, username, container_name
+params = host, port, password, username, container_name, rcon_pass
 
 def get_server_manager() -> ServerManager:
     global mg
