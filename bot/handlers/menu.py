@@ -30,6 +30,7 @@ async def start_server_cmd(msg: Message):
         await mg.start_server()
         msg_text = "Сервер запускатеся"
         msg_text += f"\nЗапускает: {msg.from_user.full_name}"
+        await msg.answer(msg_text)
         await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 @router.message(IsAdmin(), F.text == "Выключить")
@@ -76,18 +77,16 @@ async def get_logs_custom_cmd(msg: Message):
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
 async def comfirm_close_server_cb(cb: CallbackQuery):
     data = cb.data
-    action = data.split(sep="_")[1]
 
-    if action == "1":
-        uptime = mg.get_uptime()
-        await mg.stop_server()
+    uptime = await mg.get_uptime()
+    await mg.stop_server()
 
-        await cb.message.answer(f"Сервер выключается, его аптайм был {uptime}", reply_markup=menu_kb)
+    await cb.message.answer(f"Сервер выключается, его аптайм был {uptime}", reply_markup=menu_kb)
 
-        msg = cb.message
-        msg_text += f"Сервер выключают\nВыключает: {msg.from_user.full_name}"
+    msg = cb.message
+    msg_text += f"Сервер выключают\nВыключает: {msg.from_user.full_name}"
 
-        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
+    await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 async def _send_log(msg: Message, logs: str):
     if len(logs) > 1500:
