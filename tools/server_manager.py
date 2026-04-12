@@ -54,7 +54,6 @@ class ServerManager:
 
     async def exec_server(self, command: str) -> str:
         try:
-            # Используем наш внутренний асинхронный метод вместо MCRcon
             resp = await asyncio.wait_for(self._internal_rcon_command(command), timeout=5.0)
             log.info(f"Direct RCON Result: {resp}")
             return self.clean_ansi(resp) if resp else "✅ Команда выполнена (без вывода)"
@@ -66,20 +65,38 @@ class ServerManager:
             log.error(f"RCON Error: {e}")
             return f"❌ Ошибка RCON: {e}"
 
-    # --- Остальные методы (SSH и обертки) ---
-
     async def _run(self, command: str) -> str:
         if self._conn is None or self._conn.is_closed():
             log.info("SSH session is inactive. Connecting...")
             await self.connect()
+
         try:
-            result = await asyncio.wait_for(self._conn.run(command), timeout=10.0)
-            return str(result.stdout).strip() if result.stdout else str(result.stderr).strip()
+            result = await asyncio.wait_for(
+                self._conn.run(command), 
+                timeout=30.0 
+            )
+
+            output = result.stdout
+            error = result.stderr
+
+            log.debug(f"\t_run command: {command} | Error stream: {error}")
+            return str(output).strip() if output else str(error).strip()
+
+        except asyncio.TimeoutError:
+            log.error(f"SSH Command '{command}' timed out after 30s")
+            try:
+                await self.connect()
+            except:
+                pass
+            raise TimeoutError("SSH command timed out")
+            
         except Exception as ex:
             log.error(f"SSH Command '{command}' failed: {ex}")
-            try: await self.connect()
-            except: pass
-            raise TimeoutError("SSH channel timed out")
+            try:
+                await self.connect()
+            except:
+                pass
+            raise ex
 
     async def connect(self):
         if self._conn:
@@ -98,16 +115,24 @@ class ServerManager:
     async def check_status(self) -> bool:
         result = (await self._run(f"docker inspect -f '{{{{.State.Running}}}}' {self._container_name}")).replace("\n", "")
         return result == "true"
-
-    async def stop_server(self):
-        await self.exec_server("stop")
-        await asyncio.sleep(15)
-        await self._run(f'docker stop {self._container_name}')
     
+    async def stop_server(self):
+        log.info("Stopping server via RCON...")
+        await self.exec_server("stop")
+        
+        await asyncio.sleep(15)
+        
+        res = await self._run(f'docker stop {self._container_name}')
+        log.info(f"Docker stop result: {res}")
+
     async def restart_server(self) -> str:
+        log.info("Restarting server...")
         if await self.check_status():
             await self.stop_server()
-        await self.start_server()
+        
+        await asyncio.sleep(2)
+        
+        return await self._run(f'docker start {self._container_name}')
     
     async def get_logs(self, tails: int = 50) -> str | None:
         return await self._run(f'docker logs {self._container_name} {f"--tail={tails}" if tails != 0 else ""}')
