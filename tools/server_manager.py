@@ -100,10 +100,14 @@ class ServerManager:
         return result == "true"
 
     async def stop_server(self):
-        log.info(await self._run(f'docker stop {self._container_name}'))
+        await self.exec_server("stop")
+        await asyncio.sleep(15)
+        await self._run(f'docker stop {self._container_name}')
     
     async def restart_server(self) -> str:
-        return await self._run(f'docker restart {self._container_name}')
+        if await self.check_status():
+            await self.stop_server()
+        await self.start_server()
     
     async def get_logs(self, tails: int = 50) -> str | None:
         return await self._run(f'docker logs {self._container_name} {f"--tail={tails}" if tails != 0 else ""}')

@@ -5,6 +5,7 @@ extended_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text="Назад в меню")],
         [KeyboardButton(text="Очистить логи сервера")],
         [KeyboardButton(text="Список игроков на сервере")],
+        [KeyboardButton(text="Логи")],
         [KeyboardButton(text="Аптайм")]
     ],
     resize_keyboard=True,

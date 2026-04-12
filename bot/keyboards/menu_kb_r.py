@@ -4,8 +4,8 @@ menu_kb = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Запустить")],
         [KeyboardButton(text="Выключить")],
+        [KeyboardButton(text="Рестарт")],
         [KeyboardButton(text="Статус")],
-        [KeyboardButton(text="Логи")],
         [KeyboardButton(text="Другие действия...")],
     ],
     resize_keyboard=True,

@@ -1,5 +1,3 @@
-import asyncio
-
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.filters import Command
@@ -57,22 +55,14 @@ async def check_server_cmd(msg: Message):
     uptime = await mg.get_uptime()
     await msg.answer(f"Сервер {"запущен" if status else "выключен"}\nАптайм: {uptime}")
 
-@router.message(IsAdmin(), F.text == "Логи")
-async def get_logs_shortly_cmd(msg: Message):
-    await _send_log(msg, await mg.get_logs())
-
 @router.message(IsAdmin(), F.text == "Назад в меню")
 async def send_menu_kb_cmd(msg: Message):
     await msg.answer("Меню", reply_markup=menu_kb)
 
-@router.message(IsAdmin(), Command("logs"))
-async def get_logs_custom_cmd(msg: Message):
-    try:
-        tails = int(msg.text.split(sep=" ", maxsplit=2)[1])
-    except:
-        tails = 50
-    logs = await mg.get_logs(tails)
-    await _send_log(msg, logs)
+@router.message(IsAdmin(), F.text == "Рестарт")
+async def restart_server_cmd(msg: Message):
+    await mg.restart_server()
+    await msg.answer("Сервер перезапущен")
 
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
 async def comfirm_close_server_cb(cb: CallbackQuery):
@@ -87,15 +77,6 @@ async def comfirm_close_server_cb(cb: CallbackQuery):
     msg_text += f"Сервер выключают\nВыключает: {msg.from_user.full_name}"
 
     await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
-
-async def _send_log(msg: Message, logs: str):
-    if len(logs) > 1500:
-        file = BufferedInputFile(logs.encode(), "logs.txt")
-        await msg.answer_document(file, caption="Последние логи сервера\n\nНужны более длинные логи? отправльте команду /logs <tails-count>")
-    elif logs:
-        await msg.answer(f"Логи сервера:\n{logs}")
-    else:
-        await msg.answer("Логи пустые")
 
 @router.message(Command("exec"), IsAdmin())
 async def exec_cmd(msg: Message):
