@@ -64,14 +64,12 @@ async def restart_server_cmd(msg: Message):
     await msg.answer("Сервер уходит на перезапуск")
     try:
         await mg.restart_server()
+        await msg.answer("Сервер перезапущен")
     except Exception as e:
-        await msg.answer(f"произошла ошибка:\n{e}")
-    await msg.answer("Сервер перезапущен")
+        await msg.answer(f"Произошла ошибка:\n{e}")
 
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
 async def comfirm_close_server_cb(cb: CallbackQuery):
-    data = cb.data
-
     uptime = await mg.get_uptime()
     await mg.stop_server()
 
