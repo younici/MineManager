@@ -24,26 +24,25 @@ mg = get_server_manager()
 @router.message(IsAdmin(), F.text == "Запустить")
 async def start_server_cmd(msg: Message):
     msg_text = ""
-    if mg.check_status():
-        msg_text = "Сервер уже запущен"
+    if await mg.check_status():
+        await msg.answer("Сервер уже запущен")
     else:
-        mg.start_server()
+        await mg.start_server()
         msg_text = "Сервер запускатеся"
-    await msg.answer(msg_text)
-    msg_text += f"\nЗапускает: {msg.from_user.full_name}"
-    await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
+        msg_text += f"\nЗапускает: {msg.from_user.full_name}"
+        await tools.notify_admins(msg.bot, msg_text, msg.from_user.id)
 
 @router.message(IsAdmin(), F.text == "Выключить")
 async def stop_server_cmd(msg: Message):
     msg_text = ""
-    if mg.check_status():
-        if mg.get_players_list():
+    if await mg.check_status():
+        if await mg.get_players_list():
             await msg.answer("Вы действительно хотите выключить сервер?\nНа сервере сейчас присутствуют игроки",
                               reply_markup=get_inline_kb({"Подтвердить": "close_1"}))
             return
         else:
-            uptime = mg.get_uptime()
-            mg.stop_server()
+            uptime = await mg.get_uptime()
+            await mg.stop_server()
             msg_text = f"Сервер выключен, его аптайм был {uptime}"
     else:
         msg_text = "Сервер уже был выключен"
@@ -53,13 +52,13 @@ async def stop_server_cmd(msg: Message):
         
 @router.message(IsAdmin(), F.text == "Статус")
 async def check_server_cmd(msg: Message):
-    status = mg.check_status()
-    uptime = mg.get_uptime()
+    status = await mg.check_status()
+    uptime = await mg.get_uptime()
     await msg.answer(f"Сервер {"запущен" if status else "выключен"}\nАптайм: {uptime}")
 
 @router.message(IsAdmin(), F.text == "Логи")
 async def get_logs_shortly_cmd(msg: Message):
-    await _send_log(msg, mg.get_logs())
+    await _send_log(msg, await mg.get_logs())
 
 @router.message(IsAdmin(), F.text == "Назад в меню")
 async def send_menu_kb_cmd(msg: Message):
@@ -71,7 +70,7 @@ async def get_logs_custom_cmd(msg: Message):
         tails = int(msg.text.split(sep=" ", maxsplit=2)[1])
     except:
         tails = 50
-    logs = mg.get_logs(tails)
+    logs = await mg.get_logs(tails)
     await _send_log(msg, logs)
 
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
@@ -81,7 +80,7 @@ async def comfirm_close_server_cb(cb: CallbackQuery):
 
     if action == "1":
         uptime = mg.get_uptime()
-        mg.stop_server()
+        await mg.stop_server()
 
         await cb.message.answer(f"Сервер выключается, его аптайм был {uptime}", reply_markup=menu_kb)
 
@@ -114,7 +113,7 @@ async def exec_cmd(msg: Message):
 
     try:
         # 2. ПРАВИЛЬНЫЙ вызов в отдельном потоке (функция и аргумент отдельно!)
-        ret = await asyncio.to_thread(mg.exec_server, cmd)
+        ret = await mg.exec_server(cmd)
         
         # 3. Защита от пустого ответа (чтобы Telegram не выдал ошибку)
         if not ret or not str(ret).strip():

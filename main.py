@@ -47,6 +47,7 @@ async def main():
         global mg
         logging.info(params)
         mg = ServerManager(*params)
+        await mg.connect()
         if resid_url:
             redis = Redis.from_url(resid_url)
             logging.info("started with redis")

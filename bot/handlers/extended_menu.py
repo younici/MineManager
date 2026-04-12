@@ -19,11 +19,11 @@ mg = get_server_manager()
 
 @router.message(IsAdmin(), F.text == "Список игроков на сервере")
 async def send_player_list_cmd(msg: Message):
-    if not mg.check_status():
+    if not await mg.check_status():
         await msg.answer("Сервер не запущен")
         return
 
-    players_list = await asyncio.to_thread(mg.get_players_list)
+    players_list = await mg.get_players_list()
     log.info(players_list)
     if players_list:
         players: str = ""
@@ -35,12 +35,12 @@ async def send_player_list_cmd(msg: Message):
 
 @router.message(IsAdmin(), F.text == "Очистить логи сервера")
 async def clear_logs_cmd(msg: Message):
-    mg.clear_logs()
+    await mg.clear_logs()
     await msg.answer("Логи были очищены")
 
 @router.message(IsAdmin(), F.text == "Аптайм")
 async def send_uptime_server_cmd(msg: Message):
-    await msg.answer(mg.get_uptime())
+    await msg.answer(await mg.get_uptime())
 
 @router.message(IsAdmin(), F.text == "Другие действия...")
 async def send_extended_kb_cmd(msg: Message):
