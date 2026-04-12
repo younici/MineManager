@@ -61,7 +61,11 @@ async def send_menu_kb_cmd(msg: Message):
 
 @router.message(IsAdmin(), F.text == "Рестарт")
 async def restart_server_cmd(msg: Message):
-    await mg.restart_server()
+    await msg.answer("Сервер уходит на перезапуск")
+    try:
+        await mg.restart_server()
+    except Exception as e:
+        await msg.answer(f"произошла ошибка:\n{e}")
     await msg.answer("Сервер перезапущен")
 
 @router.callback_query(F.data.startswith("close_"), IsAdmin())
